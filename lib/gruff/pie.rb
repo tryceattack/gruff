@@ -13,7 +13,7 @@ require File.dirname(__FILE__) + '/base'
 
 class Gruff::Pie < Gruff::Base
 
-  DEFAULT_TEXT_OFFSET_PERCENTAGE = 0.15
+  DEFAULT_TEXT_OFFSET_PERCENTAGE = 0.05
 
   # Can be used to make the pie start cutting slices at the top (-90.0)
   # or at another angle. Default is 0.0, which starts at 3 o'clock.
@@ -38,11 +38,19 @@ class Gruff::Pie < Gruff::Base
     super
 
     return unless @has_data
-
+    @center_x_shift = 150.0
+    @center_y_shift = 0.0
     diameter = @graph_height
     radius = ([@graph_width, @graph_height].min / 2.0) * 0.8
-    center_x = @graph_left + (@graph_width / 2.0)
-    center_y = @graph_top + (@graph_height / 2.0) - 10 # Move graph up a bit
+    puts "graph_left", @graph_left
+    puts "graph_top", @graph_top
+    puts "graph_width", @graph_width
+    puts "graph_height", @graph_height
+    puts "radius",radius
+    center_x = @graph_left + (@graph_width / 2.0) + @center_x_shift
+    center_y = @graph_top + (@graph_height / 2.0) + @center_y_shift
+    puts "x",center_x
+    puts "y",center_y
     total_sum = sums_for_pie()
     prev_degrees = @zero_degree
 
@@ -63,7 +71,7 @@ class Gruff::Pie < Gruff::Base
                   radius / 2.0, radius / 2.0,
                   prev_degrees, prev_degrees + current_degrees + 0.5) # <= +0.5 'fudge factor' gets rid of the ugly gaps
                   
-        half_angle = prev_degrees + ((prev_degrees + current_degrees) - prev_degrees) / 2
+        half_angle = prev_degrees + current_degrees / 2
         
         label_val = ((data_row[DATA_VALUES_INDEX].first / total_sum) * 100.0).round
         unless label_val < @hide_labels_less_than
@@ -90,7 +98,7 @@ private
   # labels on the left and right.
   def draw_label(center_x, center_y, angle, radius, amount)
     # TODO Don't use so many hard-coded numbers
-    r_offset = 20.0      # The distance out from the center of the pie to get point
+    r_offset = 15.0      # The distance out from the center of the pie to get point
     x_offset = center_x  # + 15.0 # The label points need to be tweaked slightly
     y_offset = center_y  # This one doesn't though
     radius_offset = (radius + r_offset)
