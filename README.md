@@ -9,15 +9,12 @@ A library for making beautiful graphs.
 
 Add this line to your application's Gemfile:
 
-    gem 'gruff'
+    gem 'gruff', github: 'tryceattack/gruff'
 
 And then execute:
 
-    $ bundle
+    $ bundle install
 
-Or install it yourself as:
-
-    $ gem install gruff
 
 ## Usage
 
