@@ -46,6 +46,8 @@ class Gruff::Pie < Gruff::Base
     puts "graph_top", @graph_top
     puts "graph_width", @graph_width
     puts "graph_height", @graph_height
+    puts "graph_bottom", @graph_bottom
+    puts "rows", @rows
     puts "radius",radius
     center_x = @graph_left + (@graph_width / 2.0) + @center_x_shift
     center_y = @graph_top + (@graph_height / 2.0) + @center_y_shift
@@ -85,7 +87,23 @@ class Gruff::Pie < Gruff::Base
         prev_degrees += current_degrees
       end
     end
+    # Draw the outlines between each pie slice
+    prev_degrees = @zero_degree
+    data.each do |data_row|
+      if data_row[DATA_VALUES_INDEX].first > 0
+        @d = @d.stroke data_row[DATA_COLOR_INDEX]
+        @d = @d.fill 'transparent'
+        @d.stroke_width(3.0) 
+        current_degrees = (data_row[DATA_VALUES_INDEX].first / total_sum) * 360.0 
 
+        @d = @d.stroke('white')
+        @d = @d.line(center_x, center_y, 
+                  center_x + radius * Math.cos(deg2rad(prev_degrees + current_degrees)),
+                  center_y + radius * Math.sin(deg2rad(prev_degrees + current_degrees))) # <= +0.5 'fudge factor' gets rid of the ugly gaps
+        prev_degrees += current_degrees
+      end
+      
+    end    
     # TODO debug a circle where the text is drawn...
     
     @d.draw(@base_image)

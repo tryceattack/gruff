@@ -25,7 +25,7 @@ module Gruff
     include Deprecated
 
     # Draw extra lines showing where the margins and text centers are
-    DEBUG = false
+    DEBUG = true
 
     # Used for navigating the array of data to plot
     DATA_LABEL_INDEX = 0
@@ -594,7 +594,7 @@ module Gruff
                                 @raw_columns, 1.0,
                                 0.0, x_axis_label_y_coordinate,
                                 @x_axis_label, @scale)
-        debug { @d.line 0.0, x_axis_label_y_coordinate, @raw_columns, x_axis_label_y_coordinate }
+        #debug { @d.line 0.0, x_axis_label_y_coordinate, @raw_columns, x_axis_label_y_coordinate }
       end
 
       unless @y_axis_label.nil?
@@ -776,7 +776,7 @@ module Gruff
         # Handle wrapping
         label_widths.first.shift
         if label_widths.first.empty?
-          debug { @d.line 0.0, current_y_offset, @raw_columns, current_y_offset }
+          #debug { @d.line 0.0, current_y_offset, @raw_columns, current_y_offset }
 
           label_widths.shift
           current_x_offset = center(sum(label_widths.first)) unless label_widths.empty?
@@ -853,7 +853,7 @@ module Gruff
                                   label_text, @scale)
         end
         @labels_seen[index] = 1
-        debug { @d.line 0.0, y_offset, @raw_columns, y_offset }
+      #  debug { @d.line 0.0, y_offset, @raw_columns, y_offset }
       end
     end
 
@@ -874,7 +874,7 @@ module Gruff
                               x_offset, y_offset,
                               data_point.to_s, @scale)
 
-      debug { @d.line 0.0, y_offset, @raw_columns, y_offset }
+     # debug { @d.line 0.0, y_offset, @raw_columns, y_offset }
     end
 
     # Shows an error message because you have no data.
