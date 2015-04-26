@@ -40,28 +40,31 @@ class Gruff::CustomPie
   end
 
   def draw
-    @d = Draw.new
-    @d.stroke_width(@pie_radius)
-    total_sum = 0.0
-    prev_degrees = 0.0
-    @data.each {|data_row| total_sum += data_row[1] }
-    @sorted_data = @data.sort_by{|key,value| -value}
-    @sorted_data.each_with_index do |data_row, index|
-      @d = @d.stroke @colors[index % @colors.size]
-      current_degrees = (data_row[1] / total_sum) * 360.0
-      # ellipse will draw the the stroke centered on the first two parameters offset by the second two.
-      # therefore, in order to draw a circle of the proper diameter we must center the stroke at
-      # half the radius for both x and y
-      @d = @d.ellipse(@pie_center_x, @pie_center_y,
-                @pie_radius / 2.0, @pie_radius / 2.0,
-                prev_degrees, prev_degrees + current_degrees + 0.5) # <= +0.5 'fudge factor' gets rid of the ugly gaps
-      half_angle = prev_degrees + current_degrees / 2 # Used for labels
-      prev_degrees += current_degrees
+    if @data.size > 0
+      @d = Draw.new
+      @d.stroke_width(@pie_radius)
+      total_sum = 0.0
+      prev_degrees = 0.0
+      @data.each {|data_row| total_sum += data_row[1] }
+      @sorted_data = @data.sort_by{|key,value| -value}
+      @sorted_data.each_with_index do |data_row, index|
+        @d = @d.stroke @colors[index % @colors.size]
+        current_degrees = (data_row[1] / total_sum) * 360.0
+        # ellipse will draw the the stroke centered on the first two parameters offset by the second two.
+        # therefore, in order to draw a circle of the proper diameter we must center the stroke at
+        # half the radius for both x and y
+        @d = @d.ellipse(@pie_center_x, @pie_center_y,
+                  @pie_radius / 2.0, @pie_radius / 2.0,
+                  prev_degrees, prev_degrees + current_degrees + 0.5) # <= +0.5 'fudge factor' gets rid of the ugly gaps
+        half_angle = prev_degrees + current_degrees / 2 # Used for labels
+        prev_degrees += current_degrees
+      end
+      @d.draw(@base_image)
     end
-    @d.draw(@base_image)
   end
 
   def write(filename='graph.png')
+    draw
     @base_image.write(filename)
   end
 
