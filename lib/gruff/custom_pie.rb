@@ -106,7 +106,7 @@ class Gruff::CustomPie
     radius_offset = r_offset + radius
     radians = angle * 2 * Math::PI / 360.0
     x = center_x + radius_offset * Math.cos(radians)
-    y = center_y + radius_offset * Math.sin(radians) + 5.0
+    y = center_y + radius_offset * Math.sin(radians) + 17.0
     @d.align = CenterAlign
     insert_text(x, y, percent, {'fill'=> 'black', 'font_weight'=> 700})
   end
