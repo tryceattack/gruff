@@ -13,7 +13,7 @@ class Gruff::CustomPie
     @aggregate = Array([0,0,0,0]) # Cluster brands into categories
     @columns = @base_image.columns
     @rows = @base_image.rows
-    set_pie_colors(%w(red yellow #80ff00 green))
+    set_pie_colors(%w(#AD1F25 #BE6428 #C1B630 #1E753B))
   end
 
   def set_pie_geometry(x, y, radius)
@@ -34,7 +34,6 @@ class Gruff::CustomPie
   end
 
   def insert_text(x_offset, y_offset, text, features = {})
-    @d = Draw.new # Reset to default features
     features.each { |feature, attribute|
       set_feature(feature, attribute)
     }
@@ -58,7 +57,9 @@ class Gruff::CustomPie
         @d = @d.ellipse(@pie_center_x, @pie_center_y,
                   @pie_radius / 2.0, @pie_radius / 2.0,
                   prev_degrees, prev_degrees + current_degrees + 0.5) # <= +0.5 'fudge factor' gets rid of the ugly gaps
-        
+        half_angle = prev_degrees + current_degrees / 2
+        label_string = '$' + data_row.to_s 
+        draw_pie_label(@pie_center_x,@pie_center_y, half_angle, @pie_radius, label_string)
         prev_degrees += current_degrees
       end
       @d.draw(@base_image)
@@ -72,27 +73,42 @@ class Gruff::CustomPie
   end
 
   def draw_labels
+    @d.pointsize = 56
+    @d.align = LeftAlign
     sorted_data = @data.sort_by{|key,value| -value[1]} # Sort by descending quality
-    x_offset = 50
-    y_offset = 50
+    x_offset = 180
+    y_offset = 420
     for data in sorted_data
       if data[1][0] > 0 # Amount > 0
-        font_weight = 700 # Bold
+        font_weight = 900 # Very Bold
+        text = data[0] + ' <--'
       else
-        font_weight = 400 # Normal
+        text = data[0]
+        font_weight = 900 # Normal
       end
       case data[1][1]
         when 3
-          insert_text(x_offset, y_offset, data[0], {'fill'=> 'green', 'font_weight'=> font_weight})
+          insert_text(x_offset, y_offset, text, {'fill'=> '#1E753B', 'font_weight'=> font_weight })
         when 2
-          insert_text(x_offset, y_offset, data[0], {'fill'=> '#80ff00', 'font_weight'=> font_weight})
+          insert_text(x_offset, y_offset, text, {'fill'=> '#C1B630', 'font_weight'=> font_weight })
         when 1
-          insert_text(x_offset, y_offset, data[0], {'fill'=> 'yellow', 'font_weight'=> font_weight})
+          insert_text(x_offset, y_offset, text, {'fill'=> '#BE6428', 'font_weight'=> font_weight })
         when 0
-          insert_text(x_offset, y_offset, data[0], {'fill'=> 'red', 'font_weight'=> font_weight})
+          insert_text(x_offset, y_offset, text, {'fill'=> '#AD1F25', 'font_weight'=> font_weight })
       end
-      y_offset += 20
+      y_offset += 60
     end
+  end
+
+  def draw_pie_label(center_x, center_y, angle, radius, percent)
+    @d.pointsize = 56
+    r_offset = 50.0      # The distance out from the center of the pie to get point
+    radius_offset = r_offset + radius
+    radians = angle * 2 * Math::PI / 360.0
+    x = center_x + radius_offset * Math.cos(radians)
+    y = center_y + radius_offset * Math.sin(radians) + 5.0
+    @d.align = CenterAlign
+    insert_text(x, y, percent, {'fill'=> 'black', 'font_weight'=> 700})
   end
 
   def set_feature(feature, attribute)
@@ -113,6 +129,8 @@ class Gruff::CustomPie
         @d.stroke = attribute
       when 'pointsize'
         @d.pointsize = attribute
+      when 'text_undercolor'
+        @d.undercolor = attribute
     end
   end
 end
