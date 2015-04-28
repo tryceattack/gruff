@@ -9,11 +9,11 @@ class Gruff::CustomPie
   def initialize(image_path)
     @base_image = Image.read(image_path)[0]
     @d = Draw.new
-    @data = Hash.new
-    
+    @data = Hash.new # Value is array with two items
+    @aggregate = Array([0,0,0,0]) # Cluster brands into categories
     @columns = @base_image.columns
     @rows = @base_image.rows
-    set_pie_colors(%w(#abaf00 purple green white red))
+    set_pie_colors(%w(red yellow #80ff00 green))
   end
 
   def set_pie_geometry(x, y, radius)
@@ -25,10 +25,12 @@ class Gruff::CustomPie
   def set_pie_colors(list)
     @colors = list
   end
-  def insert_pie_data(name, data_point)
-    if data_point > 0
-      @data[name] =  data_point
-    end
+
+  def insert_pie_data(name, amount, quality)
+    #convert all '&#39; instances to an apostrophe
+    name = name.gsub(/&#39;/, "\'")
+    @data[name] =  [amount, quality]
+    @aggregate[quality] += amount
   end
 
   def insert_text(x_offset, y_offset, text, features = {})
@@ -45,18 +47,18 @@ class Gruff::CustomPie
       @d.stroke_width(@pie_radius)
       total_sum = 0.0
       prev_degrees = 0.0
-      @data.each {|data_row| total_sum += data_row[1] }
-      @sorted_data = @data.sort_by{|key,value| -value}
-      @sorted_data.each_with_index do |data_row, index|
-        @d = @d.stroke @colors[index % @colors.size]
-        current_degrees = (data_row[1] / total_sum) * 360.0
+      total_sum = @aggregate.inject(:+) + 0.0 # Sum elements and make it a float
+      @aggregate.each_with_index do |data_row, index|
+        next if data_row == 0 
+        @d = @d.stroke @colors[index]
+        current_degrees = (data_row / total_sum) * 360.0
         # ellipse will draw the the stroke centered on the first two parameters offset by the second two.
         # therefore, in order to draw a circle of the proper diameter we must center the stroke at
         # half the radius for both x and y
         @d = @d.ellipse(@pie_center_x, @pie_center_y,
                   @pie_radius / 2.0, @pie_radius / 2.0,
                   prev_degrees, prev_degrees + current_degrees + 0.5) # <= +0.5 'fudge factor' gets rid of the ugly gaps
-        half_angle = prev_degrees + current_degrees / 2 # Used for labels
+        
         prev_degrees += current_degrees
       end
       @d.draw(@base_image)
@@ -65,7 +67,32 @@ class Gruff::CustomPie
 
   def write(filename='graph.png')
     draw
+    draw_labels
     @base_image.write(filename)
+  end
+
+  def draw_labels
+    sorted_data = @data.sort_by{|key,value| -value[1]} # Sort by descending quality
+    x_offset = 50
+    y_offset = 50
+    for data in sorted_data
+      if data[1][0] > 0 # Amount > 0
+        font_weight = 700 # Bold
+      else
+        font_weight = 400 # Normal
+      end
+      case data[1][1]
+        when 3
+          insert_text(x_offset, y_offset, data[0], {'fill'=> 'green', 'font_weight'=> font_weight})
+        when 2
+          insert_text(x_offset, y_offset, data[0], {'fill'=> '#80ff00', 'font_weight'=> font_weight})
+        when 1
+          insert_text(x_offset, y_offset, data[0], {'fill'=> 'yellow', 'font_weight'=> font_weight})
+        when 0
+          insert_text(x_offset, y_offset, data[0], {'fill'=> 'red', 'font_weight'=> font_weight})
+      end
+      y_offset += 20
+    end
   end
 
   def set_feature(feature, attribute)
