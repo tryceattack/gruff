@@ -45,7 +45,8 @@ class Gruff::CustomPie
       @d = Draw.new
       @d.stroke_width(@pie_radius)
       total_sum = 0.0
-      prev_degrees = 0.0
+      prev_degrees = 60.0
+      @d.fill_opacity(0) # VERY IMPORTANT, otherwise undesired artifact can result.
       total_sum = @aggregate.inject(:+) + 0.0 # Sum elements and make it a float
       @aggregate.each_with_index do |data_row, index|
         next if data_row == 0 
@@ -77,7 +78,7 @@ class Gruff::CustomPie
     @d.align = LeftAlign
     sorted_data = @data.sort_by{|key,value| -value[1]} # Sort by descending quality
     x_offset = 180
-    y_offset = 420
+    y_offset = 440
     for data in sorted_data
       if data[1][0] > 0 # Amount > 0
         font_weight = 900 # Very Bold
@@ -102,7 +103,7 @@ class Gruff::CustomPie
 
   def draw_pie_label(center_x, center_y, angle, radius, percent)
     @d.pointsize = 56
-    r_offset = 50.0      # The distance out from the center of the pie to get point
+    r_offset = 100.0      # The distance out from the center of the pie to get point
     radius_offset = r_offset + radius
     radians = angle * 2 * Math::PI / 360.0
     x = center_x + radius_offset * Math.cos(radians)
