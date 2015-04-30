@@ -37,6 +37,7 @@ class Gruff::CustomPie
     features.each { |feature, attribute|
       set_feature(feature, attribute)
     }
+    #puts @d.get_type_metrics(@base_image, text.to_s).width,@d.get_type_metrics(@base_image, text.to_s).height,text
     @d.annotate(@base_image, 0 ,0, x_offset, y_offset, text)
   end
 
@@ -103,11 +104,31 @@ class Gruff::CustomPie
 
   def draw_pie_label(center_x, center_y, angle, radius, percent)
     @d.pointsize = 56
-    r_offset = 100.0      # The distance out from the center of the pie to get point
-    radius_offset = r_offset + radius
-    radians = angle * 2 * Math::PI / 360.0
-    x = center_x + radius_offset * Math.cos(radians)
-    y = center_y + radius_offset * Math.sin(radians) + 17.0
+    width = @d.get_type_metrics(@base_image, percent.to_s).width
+    ascent =  @d.get_type_metrics(@base_image, percent.to_s).ascent
+    radians = angle * Math::PI / 180.0
+    x = center_x +  radius * Math.cos(radians)
+    # By default, text is centered at bottom, so need to shift to center it
+    y =  center_y + ascent / 2.0 + radius * Math.sin(radians) 
+    # Imagine the text box around the text, that's what the sides are.
+    left_side = x - width / 2.0
+    right_side = x + width / 2.0
+    top_side = y + ascent / 2.0
+    bottom_side = y - ascent / 2.0
+    # Shift text box so the corner is tangent to circle
+    if left_side > center_x
+      x += width / 2.0
+    end
+    if right_side < center_x
+      x -= width / 2.0
+    end
+    if top_side > center_y
+      y += ascent / 2.0
+    end
+    if bottom_side < center_y
+      y -= ascent / 2.0
+    end
+    
     @d.align = CenterAlign
     insert_text(x, y, percent, {'fill'=> 'black', 'font_weight'=> 700})
   end
