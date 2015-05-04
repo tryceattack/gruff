@@ -106,27 +106,25 @@ class Gruff::CustomPie
     @d.pointsize = 56
     width = @d.get_type_metrics(@base_image, percent.to_s).width
     ascent =  @d.get_type_metrics(@base_image, percent.to_s).ascent
+    descent =  @d.get_type_metrics(@base_image, percent.to_s).descent
     radians = angle * Math::PI / 180.0
     x = center_x +  radius * Math.cos(radians)
     # By default, text is centered at bottom, so need to shift to center it
     y =  center_y + ascent / 2.0 + radius * Math.sin(radians) 
-    # Imagine the text box around the text, that's what the sides are.
-    left_side = x - width / 2.0
-    right_side = x + width / 2.0
-    top_side = y + ascent / 2.0
-    bottom_side = y - ascent / 2.0
-    # Shift text box so the corner is tangent to circle
-    if left_side > center_x
+    # Imagine the text box around the text
+    # Shift text box so a corner is tangent to circle
+    if x > center_x
       x += width / 2.0
     end
-    if right_side < center_x
+    if x < center_x
       x -= width / 2.0
     end
-    if top_side > center_y
+    if y > center_y
       y += ascent / 2.0
     end
-    if bottom_side < center_y
-      y -= ascent / 2.0
+    if y < center_y
+      y -= (ascent / 2.0 - descent) # descent to account for '$' descent, 
+      # descent value retrieved is negative, so sub instead of add
     end
     
     @d.align = CenterAlign
