@@ -49,20 +49,75 @@ class Gruff::CustomPie
       prev_degrees = 60.0
       @d.fill_opacity(0) # VERY IMPORTANT, otherwise undesired artifact can result.
       total_sum = @aggregate.inject(:+) + 0.0 # Sum elements and make it a float
+      degrees = Array([0,0,0,0])
+      label_offset_degrees =  Array([0,0,0,0])
       @aggregate.each_with_index do |data_row, index|
-        next if data_row == 0 
-        @d = @d.stroke @colors[index]
-        current_degrees = (data_row / total_sum) * 360.0
+        degrees[index] = (data_row / total_sum) * 360.0
+      end
+      num_small_slices = 0
+      small_slice_index = Array([0,0,0,0])
+      for i in 0..3
+        if degrees[i] != 0 and degrees[i] < 18.0
+          num_small_slices += 1
+          small_slice_index[i] = 1
+        end
+      end
+      for i in 0..3 # First draw slices
+        next if degrees[i] == 0
+        @d = @d.stroke @colors[i]
         # ellipse will draw the the stroke centered on the first two parameters offset by the second two.
         # therefore, in order to draw a circle of the proper diameter we must center the stroke at
         # half the radius for both x and y
         @d = @d.ellipse(@pie_center_x, @pie_center_y,
                   @pie_radius / 2.0, @pie_radius / 2.0,
-                  prev_degrees, prev_degrees + current_degrees + 0.5) # <= +0.5 'fudge factor' gets rid of the ugly gaps
-        half_angle = prev_degrees + current_degrees / 2
-        label_string = '$' + data_row.to_s 
-        draw_pie_label(@pie_center_x,@pie_center_y, half_angle, @pie_radius, label_string)
-        prev_degrees += current_degrees
+                  prev_degrees, prev_degrees + degrees[i] + 0.5) # <= +0.5 'fudge factor' gets rid of the ugly gaps
+        prev_degrees += degrees[i]
+      end
+      # If less than two small slices, or there are two small slices that are not adjacent
+      if num_small_slices < 2 or (num_small_slices == 2 and small_slice_index[0] == small_slice_index[2])
+        #Do nothing
+      # If two adjacent small slices, push them apart. Non-adjacent case is taken care of above.
+      # I also push back the other labels too. The logic is condensed. To see original logic,
+      # consult appendix.html
+      elsif num_small_slices == 2
+        if small_slice_index[1] == 1
+          label_offset_degrees[0] = -15
+          label_offset_degrees[2] = 15
+        else
+          label_offset_degrees[0] = 15
+          label_offset_degrees[2] = -15
+        end
+        if small_slice_index[2] == 1
+          label_offset_degrees[1] = -15
+          label_offset_degrees[3] = 15
+        else
+          label_offset_degrees[1] = 15
+          label_offset_degrees[3] = -15
+        end
+      # In this case, push apart only the outside small slices.
+      elsif num_small_slices == 3
+        if small_slice_index[0] == 0
+          label_offset_degrees[1] = -15
+          label_offset_degrees[3] = 15
+        elsif small_slice_index[1] == 0
+          label_offset_degrees[2] = -15
+          label_offset_degrees[0] = 15
+        elsif small_slice_index[2] == 0
+          label_offset_degrees[3] = -15
+          label_offset_degrees[1] = 15
+        elsif small_slice_index[3] == 0
+          label_offset_degrees[0] = -15
+          label_offset_degrees[2] = 15
+        end
+      end
+      prev_degrees = 60.0 # Now focus on labels
+      @aggregate.each_with_index do |data_row, i|
+        next if degrees[i] == 0
+        half_angle = prev_degrees + degrees[i] / 2
+        label_string = '$' + data_row.to_s
+        draw_pie_label(@pie_center_x,@pie_center_y, half_angle + label_offset_degrees[i],
+          @pie_radius, label_string)
+        prev_degrees += degrees[i]
       end
       @d.draw(@base_image)
     end
@@ -109,8 +164,8 @@ class Gruff::CustomPie
     descent =  @d.get_type_metrics(@base_image, percent.to_s).descent
     radians = angle * Math::PI / 180.0
     x = center_x +  radius * Math.cos(radians)
-    # By default, text is centered at bottom, so need to shift to center it
-    y =  center_y + ascent / 2.0 + radius * Math.sin(radians) 
+    # By default, text is centered at bottom, so need to shift vertically to center it
+    y =  center_y + ascent / 2.0 + radius * Math.sin(radians)
     # Imagine the text box around the text
     # Shift text box so a corner is tangent to circle
     if x > center_x
@@ -123,10 +178,10 @@ class Gruff::CustomPie
       y += ascent / 2.0
     end
     if y < center_y
-      y -= (ascent / 2.0 - descent) # descent to account for '$' descent, 
+      y -= (ascent / 2.0 - descent) # descent to account for '$' descent,
       # descent value retrieved is negative, so sub instead of add
     end
-    
+
     @d.align = CenterAlign
     insert_text(x, y, percent, {'fill'=> 'black', 'font_weight'=> 700})
   end
